@@ -1,87 +1,79 @@
-// screens/HomeScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons'; // Certifique-se de ter instalado react-native-vector-icons
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 
-const HomeScreen = () => {
-    const [posts, setPosts] = useState([]);
-    const [visiblePosts, setVisiblePosts] = useState(5); // Controla quantos posts estão visíveis de cada vez
+const CommentsScreen = () => {
+    const [comments, setComments] = useState([]);
+    const [visibleComments, setVisibleComments] = useState(5);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchPosts = async () => {
+        const fetchComments = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+                const response = await fetch('https://jsonplaceholder.typicode.com/comments');
+                if (!response.ok) throw new Error('Erro ao buscar comentários');
                 const data = await response.json();
-                const formattedPosts = data.map(post => ({
-                    id: post.id,
-                    title: post.title,
-                    body: post.body,
-                    tag: 'General', // Tag padrão
-                    user: {
-                        name: 'User', // Nome fictício
-                        time: 'Just now', // Tempo fictício
-                    },
-                }));
-                setPosts(formattedPosts);
-                setLoading(false);
+                setComments(data);
             } catch (error) {
-                console.error('Error fetching posts:', error);
+                setError(error.message);
+            } finally {
                 setLoading(false);
             }
         };
 
-        fetchPosts();
+        fetchComments();
     }, []);
 
-    // Função para carregar mais 5 posts
-    const loadMorePosts = () => {
-        setVisiblePosts((prevVisiblePosts) => prevVisiblePosts + 5);
+    const loadMoreComments = () => {
+        setVisibleComments((prev) => prev + 5);
     };
 
-    const renderCard = ({ item }) => (
-        <TouchableOpacity style={styles.card} activeOpacity={0.8}>
-            <View style={styles.cardBody}>
-                <Text style={[styles.tag, styles[`tag${item.tag}`]]}>{item.tag}</Text>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardBodyText}>{item.body}</Text>
-            </View>
-            <View style={styles.cardFooter}>
-                <View style={styles.user}>
-                    <View style={styles.userInfo}>
-                        <Text style={styles.userName}>{item.user.name}</Text>
-                        <Text style={styles.userTime}>{item.user.time}</Text>
-                    </View>
-                </View>
+    const renderComment = ({ item }) => (
+        <TouchableOpacity style={styles.commentCard} activeOpacity={0.8}>
+            <Image
+                style={styles.avatar}
+                source={{ uri: `https://i.pravatar.cc/150?u=${item.email}` }} 
+            />
+            <View style={styles.commentBody}>
+                <Text style={styles.commentName}>{item.name}</Text>
+                <Text style={styles.commentEmail}>{item.email}</Text>
+                <Text style={styles.commentBodyText}>{item.body}</Text>
             </View>
         </TouchableOpacity>
     );
 
     const renderFooter = () => {
-        // Renderiza o botão "Abrir mais" apenas se houver mais posts a carregar
-        if (visiblePosts < posts.length) {
+        if (visibleComments < comments.length) {
             return (
-                <TouchableOpacity style={styles.loadMoreButton} onPress={loadMorePosts}>
+                <TouchableOpacity style={styles.loadMoreButton} onPress={loadMoreComments}>
                     <Icon name="arrow-down-circle-outline" size={20} color="#FFFFFF" style={styles.icon} />
-                    <Text style={styles.loadMoreText}>Abrir mais</Text>
+                    <Text style={styles.loadMoreText}>Carregar mais</Text>
                 </TouchableOpacity>
             );
         }
-        return null; // Não renderiza nada se não houver mais posts
+        return null;
     };
 
     return (
         <View style={styles.container}>
             {loading ? (
                 <ActivityIndicator size="large" color="#4C9F70" />
+            ) : error ? (
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                    <TouchableOpacity onPress={() => Alert.alert('Tente novamente')} style={styles.retryButton}>
+                        <Text style={styles.retryText}>Tentar novamente</Text>
+                    </TouchableOpacity>
+                </View>
             ) : (
                 <FlatList
-                    data={posts.slice(0, visiblePosts)} // Renderiza os posts visíveis
-                    renderItem={renderCard}
+                    data={comments.slice(0, visibleComments)}
+                    renderItem={renderComment}
                     keyExtractor={(item) => item.id.toString()}
                     contentContainerStyle={styles.listContainer}
-                    ListFooterComponent={renderFooter} // Adiciona o botão "Abrir mais" como último item da lista
+                    ListFooterComponent={renderFooter}
                 />
             )}
         </View>
@@ -93,68 +85,52 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F0F4F8',
         padding: 20,
+        paddingTop: 40, 
     },
     listContainer: {
         paddingBottom: 20,
     },
-    card: {
+    commentCard: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
         backgroundColor: '#FFFFFF',
-        borderRadius: 15,
-        marginBottom: 20,
-        overflow: 'hidden',
+        borderRadius: 10,
+        marginBottom: 15,
+        padding: 15,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
         elevation: 4,
+        borderWidth: 1,
+        borderColor: '#E0E0E0', 
     },
-    cardBody: {
-        padding: 20,
+    avatar: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        marginRight: 15,
+        borderWidth: 2,
+        borderColor: '#4C9F70', 
     },
-    cardTitle: {
-        fontSize: 20,
+    commentBody: {
+        flex: 1,
+    },
+    commentName: {
         fontWeight: '700',
-        marginBottom: 8,
+        fontSize: 18,
         color: '#333',
     },
-    cardBodyText: {
-        color: '#555',
-        fontSize: 16,
-        lineHeight: 22,
+    commentEmail: {
+        fontSize: 14,
+        color: '#4C9F70', 
+        marginBottom: 5,
     },
-    cardFooter: {
-        padding: 15,
-        borderTopWidth: 1,
-        borderTopColor: '#E5E5E5',
-        backgroundColor: '#F7F8FA',
-    },
-    user: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    userInfo: {
-        marginLeft: 10,
-    },
-    userName: {
-        fontWeight: '600',
-        fontSize: 16,
+    commentBodyText: {
+        fontSize: 15,
         color: '#333',
-    },
-    userTime: {
-        color: '#888',
-        fontSize: 14,
-    },
-    tag: {
-        alignSelf: 'flex-start',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 20,
-        fontSize: 14,
-        color: '#fff',
-        marginBottom: 12,
-    },
-    tagGeneral: {
-        backgroundColor: '#4C9F70',
+        lineHeight: 20,
+        marginTop: 3,
     },
     loadMoreButton: {
         flexDirection: 'row',
@@ -164,6 +140,11 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: 25,
         marginTop: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 3,
     },
     loadMoreText: {
         color: '#FFFFFF',
@@ -173,6 +154,22 @@ const styles = StyleSheet.create({
     icon: {
         marginRight: 8,
     },
+    errorContainer: {
+        padding: 20,
+        alignItems: 'center',
+    },
+    errorText: {
+        color: 'red',
+        marginBottom: 10,
+    },
+    retryButton: {
+        backgroundColor: '#4C9F70',
+        padding: 10,
+        borderRadius: 5,
+    },
+    retryText: {
+        color: '#FFFFFF',
+    },
 });
 
-export default HomeScreen;
+export default CommentsScreen;

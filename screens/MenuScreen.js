@@ -19,14 +19,13 @@ const MenuScreen = ({ navigation }) => {
                 </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.card} onPress={() => alert('Ver Fotos')}>
+            <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('Photos')}>
                 <View style={styles.cardBody}>
                     <Icon name="photo" size={40} color="#4CAF50" style={styles.icon} />
                     <Text style={styles.cardTitle}>Ver Fotos</Text>
                 </View>
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.card} onPress={() => alert('Ver Álbuns de Fotos')}>
+            <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('AlbumScreen')}>
                 <View style={styles.cardBody}>
                     <Icon name="photo-album" size={40} color="#4CAF50" style={styles.icon} />
                     <Text style={styles.cardTitle}>Ver Álbuns de Fotos</Text>
